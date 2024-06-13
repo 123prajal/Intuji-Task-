@@ -53,23 +53,26 @@ exports.postBlog = async (req, res) => {
 
 // Update a blog
 exports.updateBlog = async (req, res) => {
-    try {
-        const blog = await Blog.findByIdAndUpdate(req.params.id);
-        if (!blog) return res.status(404).json({ message: 'Blog not found' });
+    const { id } = req.params;
+    const trimmedId = id.trim();
 
-        if (req.body.title != null) {
-            blog.title = req.body.title;
+    if (!mongoose.Types.ObjectId.isValid(trimmedId)) {
+        return res.status(400).json({ message: 'Invalid blog ID format' });
+    }
+
+    try {
+        const blog = await Blog.findById(trimmedId);
+        if (!blog) {
+            return res.status(404).json({ message: 'Blog not found' });
         }
-        if (req.body.description != null) {
-            blog.description = req.body.description;
-        }
-        if (req.body.category != null) {
-            blog.category = req.body.category;
-        }
+
+        blog.title = req.body.title;
+        blog.content = req.body.content;
+        blog.author = req.body.author;
 
         const updatedBlog = await blog.save();
         res.json(updatedBlog);
     } catch (err) {
-        res.status(400).json({ message: err.message });
+        res.status(500).json({ message: err.message });
     }
 };
